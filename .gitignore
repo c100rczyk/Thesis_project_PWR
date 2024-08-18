@@ -1,2 +1,4 @@
 images/*
 .idea/
+backend/weights/yolov9-c.pt
+backend/YOLO_LIBRARY
