@@ -1,2 +1,5 @@
 images/*
 .idea/
+backend_3D/weights/yolov9-c.pt
+backend_3D/YOLO_LIBRARY
+backend_3D/data
