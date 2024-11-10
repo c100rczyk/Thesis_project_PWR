@@ -5,6 +5,7 @@ module com.example.thesis_application {
     requires org.kordamp.ikonli.javafx;
     requires java.net.http;
     requires com.google.gson;
+    requires java.desktop;
 
     opens com.example.thesis_application to javafx.fxml, com.google.gson;
     exports com.example.thesis_application;
