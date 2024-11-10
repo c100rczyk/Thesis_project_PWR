@@ -20,6 +20,28 @@ import pyrealsense2 as rs   # wrapper umożliwiający wywoływanie akcji za pomo
 import io
 import tempfile
 
+###__________________Do sieci sjamskich
+import os.path
+import cv2
+import tensorflow as tf
+import numpy as np
+import keras
+from utilities.data_reader import DataReader
+from utilities.mapping import Mapper
+from keras.api.applications.densenet import DenseNet201
+import os
+from distance.EuclideanDistance import EuclideanDistance
+from metrics.Product import Product
+from metrics.Metrics import Metrics
+
+from predict_model import load_representatives, add_representatives, evaluate_representatives, create_contrastive_model, predict, capture_and_load_image
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+image_size = 224, 224
+margin = 0.5
+representatives_path = r"data/represent_our_5"
+###__________________
 
 # URL w którym aplikacja jest obsługiwana w lokalnej maszynie: http://127.0.0.1:8000
 app = FastAPI(debug=True)     # Zainicjowanie aplikacji FastAPI - instancja klasy FastAPI
@@ -58,6 +80,20 @@ async def startup_event():
     align = rs.align(align_to)
     print("Pipeline kamery Intel RealSense załadowany")
 
+
+    print("Ładowanie modelu sieci sjamskiej ...")
+    global embedding_layer
+    global representatives
+    global evaluated_reps
+    with tf.device('/CPU:0'):
+        embedding_layer, _ = create_contrastive_model()
+    print("Model sieci sjamskiej załadowany")
+    print("Ładowanie reprezentantów ...")
+    representatives = load_representatives(representatives_path)
+    evaluated_reps = evaluate_representatives(embedding_layer, representatives)
+    print("Reprezentanci załadowani")
+
+
     global camera_thread_instance
     camera_thread_instance = threading.Thread(target=camera_thread)
     camera_thread_instance.daemon = True
@@ -76,7 +112,7 @@ async def shutdown_event():
 class PredictionResponseSiameseModel(BaseModel):
     labels: List[str]
     image_base64: str
-
+    #images_base64: List[str]
 
 class Detection(BaseModel):
     """Dane zwracane z modelu Detekcji Obiektów dla każdego z wykrytych obiektów"""
@@ -143,20 +179,66 @@ def read_item(item_id: str, q: str | None = None):
     return {"item_id": item_id}
 
 
-@app.post("/predict_siamese", response_model=PredictionResponseSiameseModel, tags=["Image top3 predictions and image"])    # zdefiniowanie Endpointa
+# saved predict_siamese
+# @app.post("/predict_siamese", response_model=PredictionResponseSiameseModel, tags=["Image top3 predictions and image"])    # zdefiniowanie Endpointa
+# async def predict_siamase():
+#     #TODO pobieranie obrazu
+#     #TODO wykonanie predykcji
+#     await asyncio.sleep(1)
+#
+#     # odczytanie zapisanego obrazu z kamery:
+#     with open("../data/images/Banan.jpg", 'rb') as imageCamera:
+#         content = imageCamera.read()
+#
+#     labels = ["Pomarancza", "Banan", "Jablko"]
+#     image_base64 = base64.b64encode(content).decode("utf-8")
+#
+#     return PredictionResponseSiameseModel(labels=labels, image_base64=image_base64)
+
+# @app.post("/predict_siamese", response_model=PredictionResponseSiameseModel, tags=["Image top3 predictions and image"])    # zdefiniowanie Endpointa
+# async def predict_siamase():
+#
+#     ## ładowanie modelu w on_event
+#     try:
+#         image_move_camera = capture_and_load_image()
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+#
+#     top3_labels, top3_images = predict(image_move_camera, embedding_layer, evaluated_reps)
+#
+#     # images_base64 = []
+#     # for img in top3_images:
+#     #     _, buffer = cv2.imencode('.png', img)
+#     #     img_base64 = base64.b64encode(buffer).decode("utf-8")
+#     #     images_base64.append(img_base64)
+#
+#     _, buffer = cv2.imencode('.png', image_move_camera)
+#     img_base64 = base64.b64encode(buffer).decode("utf-8")
+#
+#     return PredictionResponseSiameseModel(labels=top3_labels, image_base64=img_base64)
+
+@app.post("/predict_siamese", response_model=PredictionResponseSiameseModel, tags=["Image top3 predictions and image"])
 async def predict_siamase():
-    #TODO pobieranie obrazu
-    #TODO wykonanie predykcji
-    await asyncio.sleep(1)
+    try:
+        image_move_camera = capture_and_load_image()
+        top5_labels, _ = predict(image_move_camera)
 
-    # odczytanie zapisanego obrazu z kamery:
-    with open("../data/images/Banan.jpg", 'rb') as imageCamera:
-        content = imageCamera.read()
+        print(f"top3labels: {top5_labels}")
 
-    labels = ["Pomarancza", "Banan", "Jablko"]
-    image_base64 = base64.b64encode(content).decode("utf-8")
+        image_to_send = (image_move_camera * 255).astype(np.uint8)
+        image_to_send = cv2.cvtColor(image_to_send, cv2.COLOR_RGB2BGR)
+        # Konwersja obrazu na base64
+        _, buffer = cv2.imencode('.png', image_to_send)
+        img_base64 = base64.b64encode(buffer).decode("utf-8")
 
-    return PredictionResponseSiameseModel(labels=labels, image_base64=image_base64)
+        return PredictionResponseSiameseModel(labels=top5_labels, image_base64=img_base64)
+    except Exception as e:
+        # Logowanie błędu
+        print(f"Błąd w endpointzie /predict_siamese: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        # Zwrot błędu do klienta
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class ObjectDetectionResponse(BaseModel):
