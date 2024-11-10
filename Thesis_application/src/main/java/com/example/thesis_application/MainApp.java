@@ -38,6 +38,8 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
 
+import java.time.LocalDateTime;
+
 
 public class MainApp extends Application {
     private Canvas canvas2D;
@@ -232,7 +234,10 @@ public class MainApp extends Application {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            System.out.println(" przeslano odpowiedz");
+            LocalDateTime currentDateTime = LocalDateTime.now();
+
+            System.out.println("Aktualny czas: "+ currentDateTime);
+
         }
         };
         timer.start();
@@ -242,28 +247,18 @@ public class MainApp extends Application {
 
     // PLANSZA 2D ______________________________________________________________________________________
     // AKTUALIZACJA DANYCH NA PLANSZY 2D
-//    private void update_plansza2D_data() {
-//        // Przykładowe dane testowe
-//        String testResponse = "{\"detections\": ["
-//            + "{\"label\": \"person\", \"x\": 100, \"y\": 800, \"depth\": 590},"
-//            + "{\"label\": \"car\", \"x\": 300, \"y\": 10, \"depth\": 10}"
-//            + "]}";
-//
-//        Gson gson = new Gson();
-//        YoloResponse yolo_data = gson.fromJson(testResponse, YoloResponse.class);
-//
-//        Platform.runLater(() -> {
-//            updateCanvas(gc, yolo_data.getDetections());
-//        });
-//    }
+
 
     // POLE WIZUALIZACJ PLANSZY 2D
     private void updateCanvas(GraphicsContext gc, List<Detection> detections){
         gc.clearRect(0, 0, canvas2D.getWidth(), canvas2D.getHeight());
         for(Detection det : detections){
-            double canvasX = det.getY();     //szerokość w aplikacji
-            double canvasY = - det.getDepth() + 600; //głębokość w aplikacji
-            gc.fillOval(canvasX, canvasY, 20, 20);  // kółko reprezentujące wykryty obiekt
+            double canvasX = (det.getX_min() + det.getX_max())/2;     //szerokość w aplikacji
+            double szerokosc_na_planszy = RangeMapper.mapValue(canvasX, 0, 640, 0, 830);
+            double glebokosc = RangeMapper.mapValue(det.getDepth(), 1, 2.3, 0, 600);
+            double glebokosc_na_planszy = - glebokosc + 600; //głębokość w aplikacji
+            gc.fillOval(szerokosc_na_planszy, glebokosc_na_planszy, 20, 20);  // kółko reprezentujące wykryty obiekt
+            gc.fillText(det.getLabel(), szerokosc_na_planszy+10, glebokosc_na_planszy);
         }
     }
 
@@ -271,15 +266,6 @@ public class MainApp extends Application {
 
     // OBJECT DETECTION VIEW_______________________________________________________________________
 
-//    private void updateImageYoloView(){
-//        //String imageURL = "https://jsonplaceholder.typicode.com/photos/17";
-//        File imagePath = "file:///home/c100rczyk/scena_zdjecie.png";
-//        if(imagePath.exists())
-//        Platform.runLater(() -> {
-//            Image image = new Image(imagePath);
-//            cameraView.setImage(image);
-//        });
-//    };
     private void updateImageObjectDetectionView() throws IOException, InterruptedException {
         String objectDetectionEndPoint = "http://localhost:8000/object_detection";
 
@@ -313,29 +299,6 @@ public class MainApp extends Application {
         }
 
     }
-
-//    private void updateImageObjectDetectionView(){
-//    Platform.runLater(() -> {
-//        //String imageURL = "https://jsonplaceholder.typicode.com/photos/17";
-//        File imageFile = new File("/home/c100rczyk/Projekty/Thesis_project_PWR/data/images/image_good.png");
-//        if (imageFile.exists()) {
-//            String imagePath = imageFile.toURI().toString();
-//            Image image = new Image(imagePath);
-//            ObjectDetectionView.setImage(image);
-//        } else {
-//            System.out.println("Plik nie istnieje: " + imageFile.getAbsolutePath());
-//            }
-//        });
-//    }
-
-
-    //    private void updateImageYoloView(ImageView cameraView, String base64Image){
-    //        byte[] imageBytes = Base64.getDecoder().decode(base64Image);    //dekoduje ciąg na tablicę bajtów
-    //        InputStream is = new ByteArrayInputStream(imageBytes);      // pozwala stworzyć strumień z tablicy bajtów
-    //        Image image = new Image(is);    // tworzy obraz który można wyświetlić
-    //        cameraView.setImage(image);
-    //
-    //    }
 
 
 
@@ -413,5 +376,34 @@ public class MainApp extends Application {
 //        } else {
 //            System.out.println("Plik nie istnieje: " + image_from_siamese.getAbsolutePath());
 //        }
+//        });
+//    }
+
+//    private void updateImageObjectDetectionView(){
+//    Platform.runLater(() -> {
+//        //String imageURL = "https://jsonplaceholder.typicode.com/photos/17";
+//        File imageFile = new File("/home/c100rczyk/Projekty/Thesis_project_PWR/data/images/image_good.png");
+//        if (imageFile.exists()) {
+//            String imagePath = imageFile.toURI().toString();
+//            Image image = new Image(imagePath);
+//            ObjectDetectionView.setImage(image);
+//        } else {
+//            System.out.println("Plik nie istnieje: " + imageFile.getAbsolutePath());
+//            }
+//        });
+//    }
+
+//    private void update_plansza2D_data() {
+//        // Przykładowe dane testowe
+//        String testResponse = "{\"detections\": ["
+//            + "{\"label\": \"person\", \"x\": 100, \"y\": 800, \"depth\": 590},"
+//            + "{\"label\": \"car\", \"x\": 300, \"y\": 10, \"depth\": 10}"
+//            + "]}";
+//
+//        Gson gson = new Gson();
+//        YoloResponse yolo_data = gson.fromJson(testResponse, YoloResponse.class);
+//
+//        Platform.runLater(() -> {
+//            updateCanvas(gc, yolo_data.getDetections());
 //        });
 //    }
