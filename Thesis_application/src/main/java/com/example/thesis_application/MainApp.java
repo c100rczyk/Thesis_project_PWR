@@ -156,53 +156,7 @@ public class MainApp extends Application {
 
         //____________________________________________________
 
-        //String yoloEndPoint = "http://localhost:8000/yolo";
-        String yoloEndPoint = "https://jsonplaceholder.typicode.com/posts/1";
-        HttpRequest request_to_yolo = HttpRequest.newBuilder(URI.create(yoloEndPoint)).GET().build();
-        client.sendAsync(request_to_yolo, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(response -> {
-            //przetwarzanie odpowiedzi
-            String testResponse = "{\"detections\": ["
-                + "{\"label\": \"person\", \"x\": 100, \"y\": 800, \"depth\": 590},"
-                + "{\"label\": \"car\", \"x\": 300, \"y\": 10, \"depth\": 10}"
-                + "]}";
-            Gson gson = new Gson();
-            YoloResponse yolo_data = gson.fromJson(testResponse, YoloResponse.class);
-
-            Platform.runLater(() -> {       // aktualizacja interfejsu użytkownika w wątku javaFX
-                updateCanvas(gc, yolo_data.getDetections());
-            });
-
-        }).exceptionally(e->{
-            e.printStackTrace();
-            return null;
-        });
-
-
-
-        //Pobieranie obrazu z FAST API (zdjęcie z kamery Intel - resize do rozmiaru który obsługuje też YOLO).
-        // ZDJĘCIE YOLO
-        String imageEndPoint = "https://jsonplaceholder.typicode.com/photos/17";
-        HttpRequest imageRequest = HttpRequest.newBuilder(URI.create(imageEndPoint)).GET().build();
-
-        client.sendAsync(imageRequest, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(response -> {
-                    Platform.runLater(() -> {
-                        //updateImageView(cameraView, response);
-                        try {
-                            updateImageObjectDetectionView();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                }).exceptionally(e-> {
-                    e.printStackTrace();
-                    return null;
-                });
+        //TU był kod *12*
 
         //cameraCanvas = new Canvas(200, 200);
         StackPane imageStack = new StackPane();
@@ -210,6 +164,7 @@ public class MainApp extends Application {
         rightPanel.getChildren().add(imageStack);
 
 
+        //AKCJE:_____________
 
         // Po naciśnięciu zwracana jest lista 3 etykiet które wykrył model sieci Sjamskich
         btn_siamese.setOnAction(event ->{
@@ -226,18 +181,15 @@ public class MainApp extends Application {
         AnimationTimer timer = new AnimationTimer() {
         @Override
         public void handle(long now) {
-            // update_plansza2D_data();       // Aktualizujemy planszę 2D
             try {
-                updateImageObjectDetectionView();  // Aktualizujemy zdjęcie rgb Detekcji Obiektów
+                updateImageObjectDetectionView();  // Aktualizujemy zdjęcie rgb Detekcji Obiektów i planszę
             } catch (IOException e) {
                 throw new RuntimeException(e);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
             LocalDateTime currentDateTime = LocalDateTime.now();
-
             System.out.println("Aktualny czas: "+ currentDateTime);
-
         }
         };
         timer.start();
@@ -407,3 +359,54 @@ public class MainApp extends Application {
 //            updateCanvas(gc, yolo_data.getDetections());
 //        });
 //    }
+
+//*12*______
+        //String yoloEndPoint = "http://localhost:8000/yolo";
+//        String yoloEndPoint = "https://jsonplaceholder.typicode.com/posts/1";
+//        HttpRequest request_to_yolo = HttpRequest.newBuilder(URI.create(yoloEndPoint)).GET().build();
+//        client.sendAsync(request_to_yolo, HttpResponse.BodyHandlers.ofString())
+//                .thenApply(HttpResponse::body)
+//                .thenAccept(response -> {
+//            //przetwarzanie odpowiedzi
+//            String testResponse = "{\"detections\": ["
+//                + "{\"label\": \"person\", \"x\": 100, \"y\": 800, \"depth\": 590},"
+//                + "{\"label\": \"car\", \"x\": 300, \"y\": 10, \"depth\": 10}"
+//                + "]}";
+//            Gson gson = new Gson();
+//            YoloResponse yolo_data = gson.fromJson(testResponse, YoloResponse.class);
+//
+//            Platform.runLater(() -> {       // aktualizacja interfejsu użytkownika w wątku javaFX
+//                updateCanvas(gc, yolo_data.getDetections());
+//            });
+//
+//        }).exceptionally(e->{
+//            e.printStackTrace();
+//            return null;
+//        });
+
+
+
+        //Pobieranie obrazu z FAST API (zdjęcie z kamery Intel - resize do rozmiaru który obsługuje też YOLO).
+        // ZDJĘCIE YOLO
+
+//        String imageEndPoint = "https://jsonplaceholder.typicode.com/photos/17";
+//        HttpRequest imageRequest = HttpRequest.newBuilder(URI.create(imageEndPoint)).GET().build();
+//
+//        client.sendAsync(imageRequest, HttpResponse.BodyHandlers.ofString())
+//                .thenApply(HttpResponse::body)
+//                .thenAccept(response -> {
+//                    Platform.runLater(() -> {
+//                        //updateImageView(cameraView, response);
+//                        try {
+//                            updateImageObjectDetectionView();
+//                        } catch (IOException e) {
+//                            throw new RuntimeException(e);
+//                        } catch (InterruptedException e) {
+//                            throw new RuntimeException(e);
+//                        }
+//                    });
+//                }).exceptionally(e-> {
+//                    e.printStackTrace();
+//                    return null;
+//                });
+//*12*
