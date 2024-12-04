@@ -204,13 +204,22 @@ public class MainApp extends Application {
     // POLE WIZUALIZACJ PLANSZY 2D
     private void updateCanvas(GraphicsContext gc, List<Detection> detections){
         gc.clearRect(0, 0, canvas2D.getWidth(), canvas2D.getHeight());
+
+        //
+        gc.setFont(new Font("Arial", 18));
+        //
+
         for(Detection det : detections){
             double canvasX = (det.getX_min() + det.getX_max())/2;     //szerokość w aplikacji
             double szerokosc_na_planszy = RangeMapper.mapValue(canvasX, 0, 640, 0, 830);
             double glebokosc = RangeMapper.mapValue(det.getDepth(), 1, 2.3, 0, 600);
             double glebokosc_na_planszy = - glebokosc + 600; //głębokość w aplikacji
+            //
+            double precision = 20.0; // Ustaw wartość precyzji według potrzeb
+            glebokosc_na_planszy = Math.round(glebokosc_na_planszy / precision) * precision;
+            //
             gc.fillOval(szerokosc_na_planszy, glebokosc_na_planszy, 20, 20);  // kółko reprezentujące wykryty obiekt
-            gc.fillText(det.getLabel(), szerokosc_na_planszy+10, glebokosc_na_planszy);
+            gc.fillText(det.getLabel(), szerokosc_na_planszy+12, glebokosc_na_planszy);
         }
     }
 
